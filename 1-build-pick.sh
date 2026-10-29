@@ -2,7 +2,7 @@
 set -u
 
 export TZ=UTC
-NETWORK=tron:3448148188
+NETWORK=${NETWORK:-tron:3448148188}   # NETWORK=tron:728126428 for mainnet
 TOKEN=USDT
 EXPIRATION=600000          # 10 minutes
 

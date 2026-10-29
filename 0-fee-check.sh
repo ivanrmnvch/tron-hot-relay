@@ -6,11 +6,11 @@
 set -u
 
 export TZ=UTC
-NETWORK=tron:3448148188
+NETWORK=${NETWORK:-tron:3448148188}   # NETWORK=tron:728126428 for mainnet
 ACCOUNT=${1:-}
 BUILD=${2:-build.json}
 
-[ -n "$ACCOUNT" ] || { echo "usage: $0 <account> [build.json]"; exit 1; }
+[ -n "$ACCOUNT" ] || { echo "usage: $0 <sender account> [build.json]"; exit 1; }
 [ -s "$BUILD" ] || { echo "not found: $BUILD"; exit 1; }
 
 TO=$(jq -r '.data.to // empty'                   "$BUILD")
