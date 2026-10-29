@@ -61,14 +61,23 @@ wallet-cli tx send \
   --network "$NETWORK" -o json > build.json
 
 jq -e '.success' build.json >/dev/null || {
-  jq -r '.error | "\(.code): \(.message)"' build.json
+  jq -r '.error | "\(.code): \(.message)"' build.json 2>/dev/null || cat build.json
   exit 1
 }
 
-jq -r '.data.hex' build.json | tr -d '[:space:]' | tr 'a-f' 'A-F' > unsigned.hex
+# One pass over the file; @tsv keeps the fields apart, IFS splits them back.
+IFS=$'\t' read -r HEX TOKEN AMOUNT TO CONTRACT TXID EXPIRES < <(
+  jq -r '.data | [.hex, .token, .rawAmount, .to, .contract, .tx.txID,
+                  (.tx.raw_data.expiration / 1000 | floor)] | @tsv' build.json
+)
 
-jq -r '.data | "\(.token) \(.rawAmount) -> \(.to)\ncontract \(.contract)\ntxID     \(.tx.txID)"' build.json
-date -u -d "@$(( $(jq -r '.data.tx.raw_data.expiration' build.json) / 1000 ))" '+expires  %Y-%m-%d %H:%M UTC'
+# A missing .hex would otherwise reach the QR as the four letters "NULL".
+[ -n "$HEX" ] || { echo "no transaction hex in build.json"; exit 1; }
+
+printf '%s' "${HEX^^}" > unsigned.hex        # ^^ uppercases: denser QR, no tr
+
+printf '%s %s -> %s\ncontract %s\ntxID     %s\n' "$TOKEN" "$AMOUNT" "$TO" "$CONTRACT" "$TXID"
+date -u -d "@$EXPIRES" '+expires  %Y-%m-%d %H:%M UTC'
 echo
 
 qrencode -t ANSIUTF8 -l M -m 2 -r unsigned.hex
