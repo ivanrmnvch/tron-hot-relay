@@ -29,4 +29,12 @@ jq -r '.data | "\(.token) \(.rawAmount) -> \(.to)\ncontract \(.contract)\ntxID  
 date -u -d "@$(( $(jq -r '.data.tx.raw_data.expiration' build.json) / 1000 ))" '+expires  %Y-%m-%d %H:%M UTC'
 echo
 
+# Can the sender pay? tx broadcast --dry-run does not check this on TRON.
+bash "$(dirname "$0")/0-fee-check.sh" "$FROM" build.json || {
+  echo
+  echo "fee problem — fix it before signing, do not start the QR round trip"
+  exit 1
+}
+echo
+
 qrencode -t ANSIUTF8 -l M -m 2 -r unsigned.hex
