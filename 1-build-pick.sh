@@ -6,9 +6,6 @@ NETWORK=${NETWORK:-tron:3448148188}   # NETWORK=tron:728126428 for mainnet
 TOKEN=USDT
 EXPIRATION=600000          # 10 minutes
 
-# readline: let a pasted value wait for a real Enter (see ./inputrc)
-export INPUTRC="$(dirname "$0")/inputrc"
-
 menu() {                   # print a numbered list
   local i=1 row
   for row in "$@"; do printf "  %d) %s\n" "$i" "$row"; i=$((i+1)); done
@@ -47,6 +44,8 @@ menu "${CON_SHOW[@]}"
 read -erp "To (number, contact name or address): " ANS
 resolve "$ANS" "${#CON_ADDR[@]}" CON_ADDR || exit 1
 TO=$RESOLVED
+read -erp "  confirm '$TO' — Enter to accept, or retype: " FIX
+[ -n "$FIX" ] && TO=$FIX
 
 read -erp "Amount ($TOKEN): " AMOUNT
 [ -n "$FROM" ] && [ -n "$TO" ] && [ -n "$AMOUNT" ] || { echo "empty input"; exit 1; }

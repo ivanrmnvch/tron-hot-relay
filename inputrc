@@ -1,4 +1,0 @@
-# A pasted address usually carries a trailing newline. Without bracketed paste
-# readline treats it as Enter and the prompt advances on its own. With it on,
-# the paste is inserted literally and waits for a real Enter.
-set enable-bracketed-paste on
