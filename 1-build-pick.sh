@@ -6,32 +6,47 @@ NETWORK=tron:3448148188
 TOKEN=USDT
 EXPIRATION=600000          # 10 minutes
 
+menu() {                   # print a numbered list
+  local i=1 row
+  for row in "$@"; do printf "  %d) %s\n" "$i" "$row"; i=$((i+1)); done
+}
+
+# $1 answer, $2 list size, $3 array name -> sets RESOLVED.
+# Not a command substitution: exit inside $( ) would only kill the subshell.
+resolve() {
+  local ans=$1 size=$2
+  local -n arr=$3
+  if [[ "$ans" =~ ^[0-9]+$ ]]; then
+    [ "$ans" -ge 1 ] && [ "$ans" -le "$size" ] || { echo "number out of range: $ans" >&2; return 1; }
+    RESOLVED=${arr[ans-1]}
+  else
+    RESOLVED=$ans
+  fi
+}
+
 LIST=$(wallet-cli list -o json)
 mapfile -t ACC_LABEL < <(jq -r '.data[].label' <<<"$LIST")
 mapfile -t ACC_SHOW  < <(jq -r '.data[] | "\(.label)  [\(.type)]  \(.addresses.tron // "-")"' <<<"$LIST")
 [ ${#ACC_LABEL[@]} -gt 0 ] || { echo "no accounts"; exit 1; }
 
 echo "Accounts:"
-PS3="From (number): "
-select PICK in "${ACC_SHOW[@]}"; do [ -n "${PICK:-}" ] && break; done
-FROM=${ACC_LABEL[REPLY-1]}
+menu "${ACC_SHOW[@]}"
+read -rp "From (number or label): " ANS
+resolve "$ANS" "${#ACC_LABEL[@]}" ACC_LABEL || exit 1
+FROM=$RESOLVED
 
 BOOK=$(wallet-cli contact list -o json)
 mapfile -t CON_ADDR < <(jq -r '.data.contacts[].address' <<<"$BOOK")
 mapfile -t CON_SHOW < <(jq -r '.data.contacts[] | "\(.name)  \(.address)"' <<<"$BOOK")
 
-MANUAL="enter address manually"
 echo "Contacts:"
-PS3="To (number): "
-select PICK in "${CON_SHOW[@]}" "$MANUAL"; do [ -n "${PICK:-}" ] && break; done
-if [ "$PICK" = "$MANUAL" ]; then
-  read -rp "To (address): " TO
-else
-  TO=${CON_ADDR[REPLY-1]}
-fi
+menu "${CON_SHOW[@]}"
+read -rp "To (number, contact name or address): " ANS
+resolve "$ANS" "${#CON_ADDR[@]}" CON_ADDR || exit 1
+TO=$RESOLVED
 
 read -rp "Amount ($TOKEN): " AMOUNT
-[ -n "$TO" ] && [ -n "$AMOUNT" ] || { echo "empty input"; exit 1; }
+[ -n "$FROM" ] && [ -n "$TO" ] && [ -n "$AMOUNT" ] || { echo "empty input"; exit 1; }
 
 echo
 echo "$FROM -> $TO : $AMOUNT $TOKEN"
