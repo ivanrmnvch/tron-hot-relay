@@ -114,10 +114,17 @@ IFS=$'\t' read -r RAW DEC TO_ADDR CONTRACT SYMBOL TXID EXPIRES SECS < <(
 )
 
 # ── transaction ───────────────────────────────────────────────────────────
+# The sender lives inside the transaction as a 41-hex owner_address.
+# encoding convert is local — no node call — and gives back base58.
+FROM_TX=$(wallet-cli encoding convert \
+  "$(jq -r '.data.tx.raw_data.contract[0].parameter.value.owner_address' build.json)" \
+  -o json | jq -r '.data.tron')
+
 section "TRANSACTION"
+row "From"  "$FROM_TX"
+row "To"    "$TO_ADDR"
 printf '  %-9s %s %s\n' "Amount" "$(money "$RAW" "$DEC")" "$SYMBOL"
 printf '  %-9s %s\n'    "Raw"    "$RAW"
-row "To"    "$TO_ADDR"
 row "Token" "$CONTRACT" "$SYMBOL"
 printf '  %-9s %s\n'              "txID"    "$TXID"
 printf '  %-9s %s  (in %dm)\n'    "Expires" "$EXPIRES" $(( SECS / 60 ))
