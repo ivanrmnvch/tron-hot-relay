@@ -60,11 +60,26 @@ IFS=$'\t' read -r RAW DEC TO_ADDR CONTRACT SYMBOL TXID EXPIRES SECS < <(
                   (.tx.raw_data.expiration / 1000 - now | floor)] | @tsv' build.json
 )
 
+# The table below is a decoded view; the QR carries the bytes. Prove the two
+# agree as far as is possible here. The third check — that raw_data re-encodes
+# to exactly these bytes — needs a protobuf encoder and runs on the signer.
+RAWHEX=$(jq -r '.data.tx.raw_data_hex' build.json)
+case "$HEX" in
+  *"$RAWHEX"*) ;;
+  *) echo "  raw_data_hex is not inside the transaction hex"; exit 1 ;;
+esac
+[ "$(printf '%s' "$RAWHEX" | xxd -r -p | sha256sum | cut -d' ' -f1)" = "$TXID" ] || {
+  echo "  txID is not sha256(raw_data_hex)"; exit 1
+}
+
 # The sender lives inside the transaction as a 41-hex owner_address.
 # encoding convert is local — no node call — and gives back base58.
 FROM_TX=$(wallet-cli encoding convert \
   "$(jq -r '.data.tx.raw_data.contract[0].parameter.value.owner_address' build.json)" \
   -o json | jq -r '.data.tron')
+[ -n "$FROM_TX" ] && [ "$FROM_TX" != "null" ] || {
+  echo "  cannot read owner_address from build.json"; exit 1
+}
 
 section "TRANSACTION"
 row "From"  "$FROM_TX"
