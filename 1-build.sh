@@ -6,9 +6,12 @@ NETWORK=${NETWORK:-tron:3448148188}   # NETWORK=tron:728126428 for mainnet
 TOKEN=USDT
 EXPIRATION=600000          # 10 minutes
 
-read -rp "From (account label): " FROM
-read -rp "To (contact or address): " TO
-read -rp "Amount ($TOKEN): " AMOUNT
+# readline: let a pasted value wait for a real Enter (see ./inputrc)
+export INPUTRC="$(dirname "$0")/inputrc"
+
+read -erp "From (account label): " FROM
+read -erp "To (contact or address): " TO
+read -erp "Amount ($TOKEN): " AMOUNT
 [ -n "$FROM" ] && [ -n "$TO" ] && [ -n "$AMOUNT" ] || { echo "empty input"; exit 1; }
 
 rm -f build.json unsigned.hex

@@ -6,6 +6,9 @@ NETWORK=${NETWORK:-tron:3448148188}   # NETWORK=tron:728126428 for mainnet
 TOKEN=USDT
 EXPIRATION=600000          # 10 minutes
 
+# readline: let a pasted value wait for a real Enter (see ./inputrc)
+export INPUTRC="$(dirname "$0")/inputrc"
+
 menu() {                   # print a numbered list
   local i=1 row
   for row in "$@"; do printf "  %d) %s\n" "$i" "$row"; i=$((i+1)); done
@@ -31,7 +34,7 @@ mapfile -t ACC_SHOW  < <(jq -r '.data[] | "\(.label)  [\(.type)]  \(.addresses.t
 
 echo "Accounts:"
 menu "${ACC_SHOW[@]}"
-read -rp "From (number or label): " ANS
+read -erp "From (number or label): " ANS
 resolve "$ANS" "${#ACC_LABEL[@]}" ACC_LABEL || exit 1
 FROM=$RESOLVED
 
@@ -41,16 +44,16 @@ mapfile -t CON_SHOW < <(jq -r '.data.contacts[] | "\(.name)  \(.address)"' <<<"$
 
 echo "Contacts:"
 menu "${CON_SHOW[@]}"
-read -rp "To (number, contact name or address): " ANS
+read -erp "To (number, contact name or address): " ANS
 resolve "$ANS" "${#CON_ADDR[@]}" CON_ADDR || exit 1
 TO=$RESOLVED
 
-read -rp "Amount ($TOKEN): " AMOUNT
+read -erp "Amount ($TOKEN): " AMOUNT
 [ -n "$FROM" ] && [ -n "$TO" ] && [ -n "$AMOUNT" ] || { echo "empty input"; exit 1; }
 
 echo
 echo "$FROM -> $TO : $AMOUNT $TOKEN"
-read -rp "Build? [y/N] " OK
+read -erp "Build? [y/N] " OK
 [ "$OK" = "y" ] || { echo "cancelled"; exit 1; }
 
 rm -f build.json unsigned.hex
