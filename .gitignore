@@ -1,0 +1,21 @@
+node_modules/
+*.log
+
+# секреты — никогда не коммитить
+.env
+.env.*
+secrets/
+*.keystore
+*.keystore.json
+*.key
+mnemonic*
+seed*
+backup*
+wlt_*
+
+# артефакты транзакций
+*.hex
+build.json
+broadcast.json
+*.png
+*.jpg
