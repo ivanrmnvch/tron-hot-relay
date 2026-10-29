@@ -8,8 +8,6 @@ DIR=${1:-/mnt/shared/DCIM/Camera}
 
 [ -d "$DIR" ] || {
   echo "not a directory: $DIR"
-  echo "what the VM actually sees:"
-  ls /mnt/shared 2>/dev/null || echo "  /mnt/shared is not mounted"
   exit 1
 }
 
