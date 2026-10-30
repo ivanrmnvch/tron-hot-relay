@@ -1,7 +1,6 @@
 #!/bin/bash
 set -u
 
-export TZ=UTC
 NETWORK=${NETWORK:-tron:3448148188}   # NETWORK=tron:728126428 for mainnet
 FILE=${1:-signed.hex}
 

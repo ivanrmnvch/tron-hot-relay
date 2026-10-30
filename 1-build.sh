@@ -1,6 +1,10 @@
 #!/bin/bash
 set -u
 
+# Without jq the script keeps going on empty values: the account list looks
+# empty and unsigned.hex ends up empty. Say what is actually wrong.
+command -v jq >/dev/null || { echo "jq is not installed: sudo apt install jq"; exit 1; }
+
 NETWORK=${NETWORK:-tron:3448148188}   # NETWORK=tron:728126428 for mainnet
 TOKEN=USDT
 EXPIRATION=600000          # 10 minutes
