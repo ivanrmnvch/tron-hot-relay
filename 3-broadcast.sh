@@ -5,32 +5,28 @@ export TZ=UTC
 NETWORK=${NETWORK:-tron:3448148188}   # NETWORK=tron:728126428 for mainnet
 FILE=${1:-signed.hex}
 
-[ -s "$FILE" ] || { echo "not found: $FILE"; exit 1; }
+# A run that stops at the dry-run or at the prompt never reaches the redirect
+# below, so the previous run's txID would survive in the file.
+rm -f broadcast.json
 
-# 1. local validation: signatures, threshold, expiration. Nothing is sent.
-wallet-cli tx broadcast --file "$FILE" --dry-run --network "$NETWORK" || {
-  echo "dry-run rejected it, nothing was sent"
-  exit 1
-}
+# Checks signatures, threshold and expiration locally. Nothing is sent, and a
+# transaction that could not succeed never reaches the node.
+wallet-cli tx broadcast --file "$FILE" --dry-run --network "$NETWORK" || exit 1
 
 echo
-read -rp "Broadcast? [y/N] " OK
+read -rp "broadcast? [y/N] " OK
 [ "$OK" = "y" ] || { echo "cancelled"; exit 1; }
 
-rm -f broadcast.json
-wallet-cli tx broadcast --file "$FILE" --network "$NETWORK" -o json > broadcast.json
-
-jq -e '.success' broadcast.json >/dev/null || {
-  jq -r '.error | "\(.code): \(.message)"' broadcast.json
-  exit 1
-}
+wallet-cli tx broadcast --file "$FILE" --network "$NETWORK" -o json > broadcast.json \
+  || { cat broadcast.json; exit 1; }
 
 TXID=$(jq -r '.data.txId' broadcast.json)
 echo "txID $TXID"
 
-# 2. poll. Branch on data.state, never on the exit code.
+# Branch on data.state, never on the exit code: a transaction that went through
+# and reverted is a successful command with a failed transaction.
 STATE=unknown
-for _ in $(seq 1 20); do
+for ((i = 0; i < 20; i++)); do
   sleep 3
   STATE=$(wallet-cli tx status --txid "$TXID" --network "$NETWORK" -o json | jq -r '.data.state')
   echo "  $STATE"
@@ -40,5 +36,6 @@ for _ in $(seq 1 20); do
   esac
 done
 
+# pending and not_found at the deadline are an unknown outcome, not a failure.
 echo "still '$STATE' — outcome UNKNOWN. Do not resend; reconcile the txid first."
 exit 1
