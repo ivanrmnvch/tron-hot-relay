@@ -1,7 +1,7 @@
 #!/bin/bash
 set -u
 
-NETWORK=tron:3448148188   # NETWORK=tron:728126428 for mainnet
+NETWORK=tron:728126428   # NETWORK=tron:3448148188 for nile sandbox
 HEX=${1:?usage: 3-broadcast-v2.sh <signed-hex>}
 
 # Checks signatures, threshold and expiration locally. Nothing is sent, and a

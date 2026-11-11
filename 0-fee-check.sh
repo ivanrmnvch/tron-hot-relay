@@ -5,7 +5,7 @@
 # tx broadcast --dry-run does NOT check this on TRON.
 set -u
 
-NETWORK=${NETWORK:-tron:3448148188}   # NETWORK=tron:728126428 for mainnet
+NETWORK=${NETWORK:-tron:728126428}   # NETWORK=tron:3448148188 for nile sandbox
 ACCOUNT=${1:-}
 BUILD=${2:-build.json}
 

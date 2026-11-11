@@ -9,7 +9,7 @@ wallet-cli contact list
 read -rp "Enter recipient: " recipient
 read -rp "Enter amount: " amount
 
-NETWORK=tron:3448148188
+NETWORK=tron:728126428
 TOKEN=USDT
 EXPIRATION=600000
 
@@ -19,7 +19,7 @@ json=$(wallet-cli tx send \
   --amount "$amount" \
   --token "$TOKEN" \
   --build-only --expiration "$EXPIRATION" \
-  --network "$NETWORK" -o json) || exit 1
+  --network "$NETWORK" -o json) || { echo "$json" >&2; exit 1; }
 
 if [[ "$json" == *'"success":true'* ]]; then
     hex=${json#*'"hex":"'}
