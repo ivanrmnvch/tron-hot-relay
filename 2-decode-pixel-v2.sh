@@ -5,10 +5,10 @@ DIR=/mnt/shared/DCIM/Camera
 
 # Only *.jpg: with RAW on, the camera writes a .RAW-02.ORIGINAL.dng beside
 # every .RAW-01.jpg, and zbarimg cannot read dng.
-PHOTO=$(ls -t "$DIR"/*.jpg | head -1)
+PHOTO=$(ls -t "$DIR"/*.jpg | sed -n 1p)
 [ -n "$PHOTO" ] || exit 1
 
-HEX=$(zbarimg --raw -q "$PHOTO" | tr -d '[:space:]')
+HEX=$(zbarimg --raw -q -Sdisable -Sqrcode.enable "$PHOTO" | tr -d '[:space:]')
 
 # The newest photo is not necessarily the signing QR: reject empty decodes and
 # any other QR payload (URLs, text). The signer emits uppercase hex.
